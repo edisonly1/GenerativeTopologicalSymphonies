@@ -1,0 +1,12 @@
+{
+  "geometry_kind": "torus_t3",
+  "mean_collapse_score": 0.07894712686538698,
+  "mean_continuity": 0.8024074074074075,
+  "mean_effective_rank": 2.763158619403839,
+  "mean_intrinsic_dim": 3.0,
+  "mean_neighbor_overlap": 0.5648611111111111,
+  "mean_phrase_count": 10.375,
+  "mean_structural_stress": 0.8588965441573821,
+  "mean_trustworthiness": 0.8139947089947089,
+  "piece_count": 8
+}

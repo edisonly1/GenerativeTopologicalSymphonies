@@ -1,0 +1,134 @@
+experiment_name: poster_alignment_asap_score_push
+seed: 42
+
+data:
+  raw_dir: data/raw/asap
+  processed_dir: data/processed/asap_score
+  splits_dir: data/splits/asap_score
+  eval_dir: data/eval_sets/asap_score
+  quantization: sixteenth
+  phrase_strategy: cadence_bars_4
+
+tokenization:
+  pitch_mode: absolute
+  pitch_vocab_size: 128
+  duration_bins: 16
+  velocity_bins: 8
+  bar_position_bins: 16
+  instrument_bins: 129
+  harmony_bins: 25
+  phrase_flag_bins: 4
+  include_harmony: true
+  include_phrase_flags: true
+
+evaluation:
+  output_dir: outputs/reports/phase6_asap_score_push
+  split: val
+  sample_count: 8
+  prompt_events: 64
+  generate_events: 96
+  temperature: 0.9
+  top_k: 0
+  top_p: 0.95
+  metrics:
+    - recurrence
+    - cadence_stability
+    - jump_distance
+    - pitch_class_divergence
+    - playability
+    - persistence
+    - structural_stress
+
+stages:
+  baseline:
+    mode: generate
+    checkpoint: outputs/runs/baseline_asap_score/latest.pt
+    config: configs/baseline_asap_score.yaml
+
+  torus_t3:
+    mode: generate
+    checkpoint: outputs/runs/torus_t3_asap_score/latest.pt
+    config: configs/torus_t3_asap_score.yaml
+    run_geometry: true
+
+  torus_t3_push:
+    mode: generate
+    checkpoint: outputs/runs/torus_t3_asap_score_push/latest.pt
+    config: configs/torus_t3_asap_score_push.yaml
+    run_geometry: true
+    skip_if_missing: true
+
+  torus_t3_push_clean:
+    mode: cleanup
+    source_stage: torus_t3_push
+    preserve_prefix_events: 64
+    max_notes_per_onset: 8
+    max_simultaneous_span: 30
+    trim_same_pitch_overlaps: true
+    skip_if_missing: true
+
+  tension_t3_sharp:
+    mode: generate
+    checkpoint: outputs/runs/tension_t3_asap_score/latest.pt
+    config: configs/tension_t3_asap_score_push.yaml
+    run_geometry: true
+    temperature: 0.78
+    top_k: 8
+    top_p: 0.9
+
+  tension_t3_sharp_clean:
+    mode: cleanup
+    source_stage: tension_t3_sharp
+    preserve_prefix_events: 64
+    max_notes_per_onset: 8
+    max_simultaneous_span: 30
+    trim_same_pitch_overlaps: true
+
+  tension_t3_push:
+    mode: generate
+    checkpoint: outputs/runs/tension_t3_asap_score_push/latest.pt
+    config: configs/tension_t3_asap_score_push.yaml
+    run_geometry: true
+    skip_if_missing: true
+
+  tension_t3_push_clean:
+    mode: cleanup
+    source_stage: tension_t3_push
+    preserve_prefix_events: 64
+    max_notes_per_onset: 8
+    max_simultaneous_span: 30
+    trim_same_pitch_overlaps: true
+    skip_if_missing: true
+
+  euclidean_sharp:
+    mode: generate
+    checkpoint: outputs/runs/euclidean_asap_score/latest.pt
+    config: configs/euclidean_asap_score_push.yaml
+    run_geometry: true
+    temperature: 0.8
+    top_k: 8
+    top_p: 0.9
+
+  euclidean_sharp_clean:
+    mode: cleanup
+    source_stage: euclidean_sharp
+    preserve_prefix_events: 64
+    max_notes_per_onset: 8
+    max_simultaneous_span: 30
+    trim_same_pitch_overlaps: true
+
+  euclidean_push:
+    mode: generate
+    checkpoint: outputs/runs/euclidean_asap_score_push/latest.pt
+    config: configs/euclidean_asap_score_push.yaml
+    run_geometry: true
+    skip_if_missing: true
+
+  euclidean_push_clean:
+    mode: cleanup
+    source_stage: euclidean_push
+    preserve_prefix_events: 64
+    max_notes_per_onset: 8
+    max_simultaneous_span: 30
+    trim_same_pitch_overlaps: true
+    skip_if_missing: true

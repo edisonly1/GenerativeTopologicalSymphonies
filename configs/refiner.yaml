@@ -1,0 +1,88 @@
+experiment_name: refiner
+seed: 42
+
+data:
+  raw_dir: data/raw/maestro
+  processed_dir: data/processed/maestro
+  splits_dir: data/splits/maestro
+  eval_dir: data/eval_sets/maestro
+  quantization: sixteenth
+  phrase_strategy: bars_4
+
+tokenization:
+  pitch_mode: absolute
+  pitch_vocab_size: 128
+  duration_bins: 16
+  velocity_bins: 8
+  bar_position_bins: 16
+  instrument_bins: 129
+  harmony_bins: 1
+  phrase_flag_bins: 4
+  include_harmony: true
+  include_phrase_flags: true
+
+model:
+  architecture: conditional_denoising_refiner
+  d_model: 256
+  num_layers: 4
+  num_heads: 4
+  dim_feedforward: 1024
+  dropout: 0.1
+  conductor_layers: 2
+  conductor_heads: 4
+  conductor_dim_feedforward: 512
+  conductor_dropout: 0.1
+  latent_style_dim: 64
+  torus_dropout: 0.1
+  refiner_layers: 4
+  refiner_heads: 4
+  refiner_dim_feedforward: 1024
+  refiner_dropout: 0.1
+  use_conductor: true
+  use_torus: true
+  use_tension: true
+  use_refiner: true
+
+conductor_targets:
+  recurrence: 2
+  tension: 4
+  density: 4
+  cadence: 2
+  harmonic_zone: 12
+
+training:
+  batch_size: 4
+  learning_rate: 0.0002
+  weight_decay: 0.01
+  max_steps: 100
+  sequence_window: 512
+  sequence_hop: 512
+  min_sequence_length: 64
+  num_workers: 0
+  gradient_clip_norm: 1.0
+  log_every: 10
+  validate_every: 25
+  checkpoint_every: 25
+  eval_batches: 8
+  device: auto
+  cache_examples: false
+  init_checkpoint: outputs/runs/tension_maestro/checkpoints/best.pt
+  output_dir: outputs/runs/refiner_maestro
+  corruption:
+    token_mask_prob: 0.15
+    pitch_shift_prob: 0.10
+    duration_shift_prob: 0.10
+    phrase_flag_flip_prob: 0.10
+    bar_position_jitter_prob: 0.10
+
+generation:
+  temperature: 0.9
+  top_k: 0
+  top_p: 0.95
+
+evaluation:
+  sample_count: 16
+  metrics:
+    - recurrence
+    - cadence_stability
+    - pitch_class_divergence

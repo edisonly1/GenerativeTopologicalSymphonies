@@ -1,0 +1,54 @@
+{
+  "items": [
+    {
+      "generated_event_count": 80,
+      "output_json": "outputs/reports/phase6_asap_score/samples/baseline/beethoven__piano_sonatas__24_2__midi_score/piece.json",
+      "output_midi": "outputs/reports/phase6_asap_score/samples/baseline/beethoven__piano_sonatas__24_2__midi_score/piece.mid",
+      "piece_id": "beethoven__piano_sonatas__24_2__midi_score"
+    },
+    {
+      "generated_event_count": 80,
+      "output_json": "outputs/reports/phase6_asap_score/samples/baseline/schubert__impromptu_op_90_d_899__4__midi_score/piece.json",
+      "output_midi": "outputs/reports/phase6_asap_score/samples/baseline/schubert__impromptu_op_90_d_899__4__midi_score/piece.mid",
+      "piece_id": "schubert__impromptu_op_90_d_899__4__midi_score"
+    },
+    {
+      "generated_event_count": 80,
+      "output_json": "outputs/reports/phase6_asap_score/samples/baseline/schubert__impromptu_op_90_d_899__4_no_repeat__midi_score/piece.json",
+      "output_midi": "outputs/reports/phase6_asap_score/samples/baseline/schubert__impromptu_op_90_d_899__4_no_repeat__midi_score/piece.mid",
+      "piece_id": "schubert__impromptu_op_90_d_899__4_no_repeat__midi_score"
+    },
+    {
+      "generated_event_count": 80,
+      "output_json": "outputs/reports/phase6_asap_score/samples/baseline/bach__prelude__bwv_864__midi_score/piece.json",
+      "output_midi": "outputs/reports/phase6_asap_score/samples/baseline/bach__prelude__bwv_864__midi_score/piece.mid",
+      "piece_id": "bach__prelude__bwv_864__midi_score"
+    },
+    {
+      "generated_event_count": 128,
+      "output_json": "outputs/reports/phase6_asap_score/samples/baseline/mozart__piano_sonatas__8_1__midi_score/piece.json",
+      "output_midi": "outputs/reports/phase6_asap_score/samples/baseline/mozart__piano_sonatas__8_1__midi_score/piece.mid",
+      "piece_id": "mozart__piano_sonatas__8_1__midi_score"
+    },
+    {
+      "generated_event_count": 80,
+      "output_json": "outputs/reports/phase6_asap_score/samples/baseline/beethoven__piano_sonatas__26_1__midi_score/piece.json",
+      "output_midi": "outputs/reports/phase6_asap_score/samples/baseline/beethoven__piano_sonatas__26_1__midi_score/piece.mid",
+      "piece_id": "beethoven__piano_sonatas__26_1__midi_score"
+    },
+    {
+      "generated_event_count": 80,
+      "output_json": "outputs/reports/phase6_asap_score/samples/baseline/beethoven__piano_sonatas__26_1_no_repeat__midi_score/piece.json",
+      "output_midi": "outputs/reports/phase6_asap_score/samples/baseline/beethoven__piano_sonatas__26_1_no_repeat__midi_score/piece.mid",
+      "piece_id": "beethoven__piano_sonatas__26_1_no_repeat__midi_score"
+    },
+    {
+      "generated_event_count": 80,
+      "output_json": "outputs/reports/phase6_asap_score/samples/baseline/schubert__piano_sonatas__664_2__midi_score/piece.json",
+      "output_midi": "outputs/reports/phase6_asap_score/samples/baseline/schubert__piano_sonatas__664_2__midi_score/piece.mid",
+      "piece_id": "schubert__piano_sonatas__664_2__midi_score"
+    }
+  ],
+  "manifest_path": "outputs/reports/phase6_asap_score/samples/baseline/manifest.json",
+  "piece_count": 8
+}

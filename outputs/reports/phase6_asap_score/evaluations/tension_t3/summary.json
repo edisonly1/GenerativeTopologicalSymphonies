@@ -1,0 +1,19 @@
+{
+  "mean_cadence_rate": 0.40208333333333335,
+  "mean_event_count": 156.0,
+  "mean_final_duration": 3.74375,
+  "mean_large_jump_rate": 0.02525069270352289,
+  "mean_large_span_rate": 0.0,
+  "mean_max_persistence": 0.21244044963420217,
+  "mean_overlap_violation_rate": 0.0,
+  "mean_persistence_bar_count": 2.625,
+  "mean_pitch_class_divergence": 0.06894154967962317,
+  "mean_pitch_class_entropy": 2.7745002641033016,
+  "mean_pitch_jump": 1.4110370761314157,
+  "mean_polyphony_peak": 1.0,
+  "mean_recurrence_similarity": 0.9221334342019335,
+  "mean_recurrent_phrase_ratio": 0.90625,
+  "mean_tonal_center_strength": 0.27510364808707133,
+  "mean_transition_perplexity": 22.967557703653846,
+  "piece_count": 8
+}

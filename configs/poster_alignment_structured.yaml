@@ -1,0 +1,82 @@
+experiment_name: poster_alignment_structured
+seed: 42
+
+data:
+  raw_dir: data/raw/maestro
+  processed_dir: data/processed/maestro_structured
+  splits_dir: data/splits/maestro_structured
+  eval_dir: data/eval_sets/maestro_structured
+  quantization: sixteenth
+  phrase_strategy: cadence_bars_4
+
+tokenization:
+  pitch_mode: absolute
+  pitch_vocab_size: 128
+  duration_bins: 16
+  velocity_bins: 8
+  bar_position_bins: 16
+  instrument_bins: 129
+  harmony_bins: 25
+  phrase_flag_bins: 4
+  include_harmony: true
+  include_phrase_flags: true
+
+model:
+  architecture: poster_alignment_structured_suite
+  d_model: 256
+  num_layers: 4
+  num_heads: 4
+  dropout: 0.1
+  latent_style_dim: 64
+  use_conductor: true
+  use_torus: true
+  use_tension: true
+  use_refiner: false
+
+generation:
+  split: val
+  prompt_events: 64
+  generate_events: 96
+  temperature: 0.9
+  top_k: 0
+  top_p: 0.95
+
+evaluation:
+  output_dir: outputs/reports/poster_alignment_structured
+  split: val
+  sample_count: 8
+  prompt_events: 64
+  generate_events: 96
+  metrics:
+    - recurrence
+    - cadence_stability
+    - jump_distance
+    - pitch_class_divergence
+    - playability
+    - persistence
+    - structural_stress
+
+stages:
+  baseline:
+    mode: generate
+    config: configs/baseline_structured.yaml
+    checkpoint: outputs/runs/baseline_maestro_structured/latest.pt
+    skip_if_missing: true
+  tension_t3:
+    mode: generate
+    config: configs/tension_t3_structured.yaml
+    checkpoint: outputs/runs/tension_t3_structured/latest.pt
+    run_geometry: true
+    skip_if_missing: true
+  torus_t3:
+    mode: generate
+    config: configs/torus_t3_structured.yaml
+    checkpoint: outputs/runs/torus_t3_structured/latest.pt
+    run_geometry: true
+    skip_if_missing: true
+  euclidean:
+    mode: generate
+    config: configs/euclidean_structured.yaml
+    checkpoint: outputs/runs/euclidean_structured/latest.pt
+    run_geometry: true
+    skip_if_missing: true

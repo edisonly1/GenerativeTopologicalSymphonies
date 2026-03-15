@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "generative-topological-symphonies"
+version = "0.1.0"
+description = "Symbolic music generation with topological inductive bias and phrase-level control."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "PyYAML>=6.0",
+  "scipy>=1.13",
+  "scikit-learn>=1.5",
+]
+
+[project.scripts]
+gts-evaluate-samples = "evaluation.evaluate_samples:main"
+gts-build-reference-set = "evaluation.matched_reference:main"
+gts-diagnose-recurrence = "evaluation.diagnose_recurrence:main"
+gts-evaluate-geometry = "evaluation.geometry:main"
+gts-build-poster-report = "evaluation.poster_report:main"
+gts-generate = "inference.generate:main"
+gts-refine = "inference.refine:main"
+gts-generate-toy-data = "preprocessing.generate_toy_data:main"
+gts-prepare-dataset = "preprocessing.prepare_dataset:main"
+gts-run-ablation-suite = "evaluation.run_ablation_suite:main"
+gts-train-conductor = "training.train_conductor:main"
+gts-train-refiner = "training.train_refiner:main"
+gts-train-torus = "training.train_torus:main"
+gts-train-tension = "training.train_tension:main"
+
+[project.optional-dependencies]
+music = [
+  "pretty_midi>=0.2.10",
+  "miditoolkit>=1.0.1",
+  "music21>=9.1",
+]
+ml = [
+  "torch>=2.5",
+]
+tda = [
+  "ripser>=0.6.8",
+]
+dev = [
+  "pytest>=8.3",
+  "ruff>=0.6",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

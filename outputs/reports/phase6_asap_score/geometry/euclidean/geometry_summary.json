@@ -1,0 +1,12 @@
+{
+  "geometry_kind": "euclidean_r3",
+  "mean_collapse_score": 0.12180753548940022,
+  "mean_continuity": 0.9096560846560846,
+  "mean_effective_rank": 2.6345773935317993,
+  "mean_intrinsic_dim": 3.0,
+  "mean_neighbor_overlap": 0.6898214285714286,
+  "mean_phrase_count": 10.375,
+  "mean_structural_stress": 3.35173541565599,
+  "mean_trustworthiness": 0.9234656084656084,
+  "piece_count": 8
+}

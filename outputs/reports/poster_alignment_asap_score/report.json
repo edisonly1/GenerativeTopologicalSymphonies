@@ -1,0 +1,186 @@
+{
+  "baseline_stage": "baseline",
+  "baseline_summary": {
+    "mean_cadence_rate": 0.2708333333333333,
+    "mean_event_count": 86.0,
+    "mean_final_duration": 2.479166666666667,
+    "mean_large_jump_rate": 0.7290566131765175,
+    "mean_large_span_rate": 0.0,
+    "mean_max_persistence": 0.0005420636426696629,
+    "mean_overlap_violation_rate": 0.0,
+    "mean_persistence_bar_count": 0.125,
+    "mean_pitch_class_divergence": 0.4606954823632136,
+    "mean_pitch_class_entropy": 2.5687054358670287,
+    "mean_pitch_jump": 20.92979417920861,
+    "mean_polyphony_peak": 1.0,
+    "mean_recurrence_similarity": 0.6354923578338818,
+    "mean_recurrent_phrase_ratio": 0.0625,
+    "mean_tonal_center_strength": 0.2941093585444435,
+    "mean_transition_perplexity": 30.09674782957952,
+    "piece_count": 8
+  },
+  "criteria": [
+    {
+      "baseline": 0.6354923578338818,
+      "better": "higher",
+      "criterion": "Structural Coherence",
+      "metric": "mean_recurrence_similarity",
+      "tension_t3": 0.9221334342019335,
+      "reference": 0.8487506596416381
+    },
+    {
+      "baseline": 20.92979417920861,
+      "better": "lower",
+      "criterion": "Melodic Quality",
+      "metric": "mean_pitch_jump",
+      "tension_t3": 1.4110370761314157,
+      "reference": 9.341332409728636
+    },
+    {
+      "baseline": 0.4606954823632136,
+      "better": "lower",
+      "criterion": "Tonal Fidelity",
+      "metric": "mean_pitch_class_divergence",
+      "tension_t3": 0.06894154967962317,
+      "reference": null
+    },
+    {
+      "baseline": 0.0,
+      "better": "lower",
+      "criterion": "Human Plausibility",
+      "metric": "mean_large_span_rate",
+      "tension_t3": 0.0,
+      "reference": 0.22356060606060604
+    },
+    {
+      "better": "lower",
+      "criterion": "Geometry Preservation",
+      "euclidean": 3.35173541565599,
+      "metric": "mean_structural_stress",
+      "torus_t3": 0.8588965441573821
+    },
+    {
+      "better": "lower",
+      "criterion": "Latent Collapse",
+      "euclidean": 0.12180753548940022,
+      "metric": "mean_collapse_score",
+      "torus_t3": 0.07894712686538698
+    }
+  ],
+  "euclidean_stage_label": "euclidean",
+  "euclidean_summary": {
+    "geometry_kind": "euclidean_r3",
+    "mean_collapse_score": 0.12180753548940022,
+    "mean_continuity": 0.9096560846560846,
+    "mean_effective_rank": 2.6345773935317993,
+    "mean_intrinsic_dim": 3.0,
+    "mean_neighbor_overlap": 0.6898214285714286,
+    "mean_phrase_count": 10.375,
+    "mean_structural_stress": 3.35173541565599,
+    "mean_trustworthiness": 0.9234656084656084,
+    "piece_count": 8
+  },
+  "geometry_stage_label": "torus_t3",
+  "geometry_summary": {
+    "geometry_kind": "torus_t3",
+    "mean_collapse_score": 0.07894712686538698,
+    "mean_continuity": 0.8024074074074075,
+    "mean_effective_rank": 2.763158619403839,
+    "mean_intrinsic_dim": 3.0,
+    "mean_neighbor_overlap": 0.5648611111111111,
+    "mean_phrase_count": 10.375,
+    "mean_structural_stress": 0.8588965441573821,
+    "mean_trustworthiness": 0.8139947089947089,
+    "piece_count": 8
+  },
+  "music_stage": "tension_t3",
+  "music_summary": {
+    "mean_cadence_rate": 0.40208333333333335,
+    "mean_event_count": 156.0,
+    "mean_final_duration": 3.74375,
+    "mean_large_jump_rate": 0.02525069270352289,
+    "mean_large_span_rate": 0.0,
+    "mean_max_persistence": 0.21244044963420217,
+    "mean_overlap_violation_rate": 0.0,
+    "mean_persistence_bar_count": 2.625,
+    "mean_pitch_class_divergence": 0.06894154967962317,
+    "mean_pitch_class_entropy": 2.7745002641033016,
+    "mean_pitch_jump": 1.4110370761314157,
+    "mean_polyphony_peak": 1.0,
+    "mean_recurrence_similarity": 0.9221334342019335,
+    "mean_recurrent_phrase_ratio": 0.90625,
+    "mean_tonal_center_strength": 0.27510364808707133,
+    "mean_transition_perplexity": 22.967557703653846,
+    "piece_count": 8
+  },
+  "phase6_report_path": "outputs/reports/phase6_asap_score/report.json",
+  "poster_claims": [
+    {
+      "claim": "Erratic melodic jumps reduced by 68%",
+      "current_value": 93.25823720936003,
+      "status": "supported",
+      "target_value": 68.0,
+      "unit": "percent"
+    },
+    {
+      "claim": "Tonal distribution 85% closer to human-composed music",
+      "current_value": 85.03533194508961,
+      "status": "supported",
+      "target_value": 85.0,
+      "unit": "percent"
+    },
+    {
+      "claim": "Structural stress reduced by 73% versus Euclidean mapping",
+      "current_value": 74.374572045709,
+      "status": "supported",
+      "target_value": 73.0,
+      "unit": "percent"
+    },
+    {
+      "claim": "Persistent patterns increased 7x over the baseline",
+      "current_value": 391.91053026160023,
+      "status": "supported",
+      "target_value": 7.0,
+      "unit": "ratio"
+    },
+    {
+      "claim": "Unconstrained generation collapses to a low-dimensional signature",
+      "current_value": 35.18699270271583,
+      "status": "supported",
+      "target_value": null,
+      "unit": "percent"
+    }
+  ],
+  "reference_summary": {
+    "mean_cadence_rate": 0.28541666666666665,
+    "mean_event_count": 156.0,
+    "mean_final_duration": 1.5354166666666667,
+    "mean_large_jump_rate": 0.3195892158156309,
+    "mean_large_span_rate": 0.22356060606060604,
+    "mean_max_persistence": 0.07525756975832433,
+    "mean_overlap_violation_rate": 0.05608861975623782,
+    "mean_persistence_bar_count": 1.0,
+    "mean_pitch_class_divergence": null,
+    "mean_pitch_class_entropy": 2.8901178796382725,
+    "mean_pitch_jump": 9.341332409728636,
+    "mean_polyphony_peak": 6.25,
+    "mean_recurrence_similarity": 0.8487506596416381,
+    "mean_recurrent_phrase_ratio": 0.53125,
+    "mean_tonal_center_strength": 0.23492025101764785,
+    "mean_transition_perplexity": null,
+    "piece_count": 8
+  },
+  "summary": {
+    "matched_claims": [
+      "Erratic melodic jumps reduced by 68%",
+      "Tonal distribution 85% closer to human-composed music",
+      "Structural stress reduced by 73% versus Euclidean mapping",
+      "Persistent patterns increased 7x over the baseline",
+      "Unconstrained generation collapses to a low-dimensional signature"
+    ],
+    "partial_claims": [],
+    "poster_match_score": 5,
+    "poster_partial_score": 0,
+    "unsupported_claims": []
+  }
+}

@@ -1,0 +1,64 @@
+experiment_name: baseline
+seed: 42
+
+data:
+  raw_dir: data/raw/maestro
+  processed_dir: data/processed/maestro
+  splits_dir: data/splits/maestro
+  eval_dir: data/eval_sets/maestro
+  quantization: sixteenth
+  phrase_strategy: bars_4
+
+tokenization:
+  pitch_mode: absolute
+  pitch_vocab_size: 128
+  duration_bins: 16
+  velocity_bins: 8
+  bar_position_bins: 16
+  instrument_bins: 129
+  harmony_bins: 1
+  phrase_flag_bins: 4
+  include_harmony: true
+  include_phrase_flags: true
+
+model:
+  architecture: decoder_transformer
+  d_model: 256
+  num_layers: 4
+  num_heads: 4
+  dim_feedforward: 1024
+  dropout: 0.1
+  use_conductor: false
+  use_torus: false
+  use_tension: false
+  use_refiner: false
+
+training:
+  batch_size: 4
+  learning_rate: 0.0003
+  weight_decay: 0.01
+  max_steps: 10000
+  sequence_window: 512
+  sequence_hop: 512
+  min_sequence_length: 64
+  num_workers: 0
+  gradient_clip_norm: 1.0
+  log_every: 10
+  validate_every: 500
+  checkpoint_every: 500
+  eval_batches: 8
+  device: auto
+  cache_examples: false
+  output_dir: outputs/runs/baseline_maestro
+
+generation:
+  temperature: 1.0
+  top_k: 0
+  top_p: 0.95
+
+evaluation:
+  sample_count: 16
+  metrics:
+    - perplexity
+    - jump_distance
+    - pitch_class_divergence
