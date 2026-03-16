@@ -1,0 +1,73 @@
+experiment_name: diffusion_unet_asap_score
+seed: 42
+
+metadata:
+  public_name: Diffusion U-Net
+  repo_stage: diffusion_unet
+  description: Symbolic 1D U-Net denoising baseline trained on grouped-token corruption.
+
+data:
+  raw_dir: data/raw/asap
+  processed_dir: data/processed/asap_score
+  splits_dir: data/splits/asap_score
+  eval_dir: data/eval_sets/asap_score
+  quantization: sixteenth
+  phrase_strategy: cadence_bars_4
+
+tokenization:
+  pitch_mode: absolute
+  pitch_vocab_size: 128
+  duration_bins: 16
+  velocity_bins: 8
+  bar_position_bins: 16
+  instrument_bins: 129
+  harmony_bins: 25
+  phrase_flag_bins: 4
+  include_harmony: true
+  include_phrase_flags: true
+
+model:
+  architecture: diffusion_unet
+  d_model: 256
+  base_channels: 256
+  dropout: 0.1
+  use_conductor: false
+  use_torus: false
+  use_tension: false
+  use_refiner: true
+
+training:
+  batch_size: 4
+  learning_rate: 0.0002
+  weight_decay: 0.01
+  max_steps: 120
+  sequence_window: 512
+  sequence_hop: 512
+  min_sequence_length: 64
+  num_workers: 0
+  gradient_clip_norm: 1.0
+  log_every: 10
+  validate_every: 25
+  checkpoint_every: 25
+  eval_batches: 8
+  device: auto
+  cache_examples: false
+  output_dir: outputs/runs/diffusion_unet_asap_score
+  corruption:
+    token_mask_prob: 0.20
+    pitch_shift_prob: 0.10
+    duration_shift_prob: 0.10
+    phrase_flag_flip_prob: 0.10
+    bar_position_jitter_prob: 0.10
+
+generation:
+  temperature: 0.9
+  top_k: 0
+  top_p: 0.95
+
+evaluation:
+  sample_count: 16
+  metrics:
+    - recurrence
+    - cadence_stability
+    - pitch_class_divergence

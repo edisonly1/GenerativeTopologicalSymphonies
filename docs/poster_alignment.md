@@ -13,16 +13,19 @@ This repository exposes the implemented model family and geometry ablations expl
 
 The `Ingram` names are therefore first-class public aliases backed by dedicated configs and training entry points, not only narrative labels in presentation materials.
 
-## External baselines
+## Benchmark baselines
 
-The following names are **not implemented in this repository**:
+The poster-cited comparison names now map to first-class repo baselines:
 
-- Google Magenta
-- FIGARO
-- MusicTransformer
-- diffusion / U-Net / VAE decoder baselines
+| Poster / benchmark name | Repo config | Entry point |
+| --- | --- | --- |
+| Magenta Music Transformer | `configs/magenta_music_transformer_asap_score.yaml` | `training.train_magenta_music_transformer` |
+| MusicTransformer | `configs/music_transformer_asap_score.yaml` | `training.train_music_transformer` |
+| FIGARO | `configs/figaro_asap_score.yaml` | `training.train_figaro` |
+| Diffusion U-Net | `configs/diffusion_unet_asap_score.yaml` | `training.train_diffusion_unet` |
+| VAE decoder | `configs/vae_decoder_asap_score.yaml` | `training.train_vae` |
 
-If they are mentioned in external slides or posters, treat them as external comparison targets rather than shipped code paths. A direct status table is in `docs/benchmark_scope.md`.
+A direct status table is in `docs/benchmark_scope.md`.
 
 ## Geometry-family ablations
 

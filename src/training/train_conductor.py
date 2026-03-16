@@ -19,6 +19,7 @@ from models.conductor import (
     PhraseConductorConfig,
 )
 from models.decoder import BaselineDecoderConfig
+from models.figaro import FigaroStyleGroupedDecoder
 from training.conductor_targets import DEFAULT_CONDUCTOR_TARGET_VOCAB_SIZES
 from training.train_baseline import (
     append_metrics,
@@ -51,8 +52,9 @@ def build_conductor_model(
     *,
     vocab_sizes: dict[str, int],
 ) -> ConductorConditionedGroupedDecoder:
-    """Instantiate the conductor-conditioned decoder stage."""
+    """Instantiate the configured control-conditioned decoder stage."""
     model_config = config["model"]
+    architecture = model_config.get("architecture", "decoder_transformer_with_conductor")
     decoder_config = BaselineDecoderConfig(
         d_model=model_config["d_model"],
         num_layers=model_config["num_layers"],
@@ -72,7 +74,12 @@ def build_conductor_model(
     )
     target_vocab_sizes = DEFAULT_CONDUCTOR_TARGET_VOCAB_SIZES.copy()
     target_vocab_sizes.update(config.get("conductor_targets", {}))
-    return ConductorConditionedGroupedDecoder(
+    model_class = (
+        FigaroStyleGroupedDecoder
+        if architecture == "figaro_style_transformer"
+        else ConductorConditionedGroupedDecoder
+    )
+    return model_class(
         vocab_sizes=vocab_sizes,
         decoder_config=decoder_config,
         conductor_config=conductor_config,

@@ -5,7 +5,6 @@ from __future__ import annotations
 import unittest
 
 from models.ingram import (
-    POSTER_REFERENCED_EXTERNAL_BASELINES,
     get_public_model_spec,
     list_public_model_specs,
     validate_public_model_config,
@@ -34,13 +33,6 @@ class IngramAliasTests(unittest.TestCase):
             validate_public_model_config(ingram_2, expected_model="ingram_2").public_name,
             "Ingram-2",
         )
-
-    def test_external_baselines_are_marked_as_unimplemented(self) -> None:
-        self.assertIn("Google Magenta", POSTER_REFERENCED_EXTERNAL_BASELINES)
-        self.assertIn("FIGARO", POSTER_REFERENCED_EXTERNAL_BASELINES)
-        self.assertIn("MusicTransformer", POSTER_REFERENCED_EXTERNAL_BASELINES)
-        self.assertIn("Diffusion U-Net", POSTER_REFERENCED_EXTERNAL_BASELINES)
-        self.assertIn("VAE decoder", POSTER_REFERENCED_EXTERNAL_BASELINES)
 
 
 if __name__ == "__main__":

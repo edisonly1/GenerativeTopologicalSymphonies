@@ -1,0 +1,75 @@
+experiment_name: vae_decoder_asap_score
+seed: 42
+
+metadata:
+  public_name: VAE decoder
+  repo_stage: vae_decoder
+  description: Sequence-level variational autoencoder baseline over grouped symbolic tokens.
+
+data:
+  raw_dir: data/raw/asap
+  processed_dir: data/processed/asap_score
+  splits_dir: data/splits/asap_score
+  eval_dir: data/eval_sets/asap_score
+  quantization: sixteenth
+  phrase_strategy: cadence_bars_4
+
+tokenization:
+  pitch_mode: absolute
+  pitch_vocab_size: 128
+  duration_bins: 16
+  velocity_bins: 8
+  bar_position_bins: 16
+  instrument_bins: 129
+  harmony_bins: 25
+  phrase_flag_bins: 4
+  include_harmony: true
+  include_phrase_flags: true
+
+model:
+  architecture: vae_decoder
+  d_model: 256
+  num_layers: 4
+  encoder_layers: 4
+  num_heads: 4
+  dim_feedforward: 1024
+  dropout: 0.1
+  latent_dim: 128
+  vae_dropout: 0.1
+  use_conductor: false
+  use_torus: false
+  use_tension: false
+  use_refiner: false
+
+losses:
+  kl_weight: 0.05
+
+training:
+  batch_size: 4
+  learning_rate: 0.00025
+  weight_decay: 0.01
+  max_steps: 180
+  sequence_window: 512
+  sequence_hop: 512
+  min_sequence_length: 64
+  num_workers: 0
+  gradient_clip_norm: 1.0
+  log_every: 10
+  validate_every: 25
+  checkpoint_every: 25
+  eval_batches: 8
+  device: auto
+  cache_examples: false
+  output_dir: outputs/runs/vae_decoder_asap_score
+
+generation:
+  temperature: 1.0
+  top_k: 0
+  top_p: 0.95
+
+evaluation:
+  sample_count: 16
+  metrics:
+    - perplexity
+    - jump_distance
+    - pitch_class_divergence

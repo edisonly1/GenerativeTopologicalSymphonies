@@ -14,6 +14,7 @@ from torch.nn.utils import clip_grad_norm_
 
 from losses.reconstruction import grouped_reconstruction_loss
 from models.decoder import BaselineDecoderConfig, BaselineGroupedDecoder
+from models.music_transformer import MusicTransformerConfig, MusicTransformerGroupedDecoder
 from tokenization import load_split_piece_ids
 from training.data import (
     FEATURE_NAMES,
@@ -136,9 +137,21 @@ def build_datasets(
     )
 
 
-def build_model(config: dict[str, Any], *, vocab_sizes: dict[str, int]) -> BaselineGroupedDecoder:
-    """Instantiate the baseline grouped-token decoder."""
+def build_model(config: dict[str, Any], *, vocab_sizes: dict[str, int]) -> torch.nn.Module:
+    """Instantiate the configured autoregressive grouped-token decoder."""
     model_config = config["model"]
+    architecture = model_config.get("architecture", "decoder_transformer")
+    if architecture in {"music_transformer", "magenta_music_transformer"}:
+        decoder_config = MusicTransformerConfig(
+            d_model=model_config["d_model"],
+            num_layers=model_config["num_layers"],
+            num_heads=model_config["num_heads"],
+            dropout=model_config["dropout"],
+            dim_feedforward=model_config.get("dim_feedforward", model_config["d_model"] * 4),
+            relative_attention_buckets=model_config.get("relative_attention_buckets", 32),
+            max_relative_distance=model_config.get("max_relative_distance", 128),
+        )
+        return MusicTransformerGroupedDecoder(vocab_sizes=vocab_sizes, config=decoder_config)
     decoder_config = BaselineDecoderConfig(
         d_model=model_config["d_model"],
         num_layers=model_config["num_layers"],
@@ -159,7 +172,7 @@ def summarize_batch(batch: AutoregressiveBatch) -> dict[str, Any]:
 
 
 def evaluate_model(
-    model: BaselineGroupedDecoder,
+    model: torch.nn.Module,
     dataloader,
     *,
     device: torch.device,
@@ -192,7 +205,7 @@ def append_metrics(path: Path, payload: dict[str, Any]) -> None:
 def save_checkpoint(
     path: Path,
     *,
-    model: BaselineGroupedDecoder,
+    model: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
     step: int,
     best_val_loss: float,

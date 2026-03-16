@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,15 +52,6 @@ PUBLIC_MODEL_SPECS: dict[str, PublicModelSpec] = {
     ),
 }
 
-POSTER_REFERENCED_EXTERNAL_BASELINES: tuple[str, ...] = (
-    "Google Magenta",
-    "FIGARO",
-    "MusicTransformer",
-    "Diffusion U-Net",
-    "VAE decoder",
-)
-
-
 def _canonicalize_model_name(name: str) -> str:
     return name.strip().lower().replace("-", "_").replace(" ", "_")
 
@@ -105,8 +95,3 @@ def validate_public_model_config(config: dict, *, expected_model: str) -> Public
             f"Config repo_stage mismatch: expected '{spec.repo_stage}', got '{repo_stage}'."
         )
     return spec
-
-
-def iter_external_baselines() -> Iterable[str]:
-    """Expose poster-cited external baselines that are not shipped in this repo."""
-    return POSTER_REFERENCED_EXTERNAL_BASELINES

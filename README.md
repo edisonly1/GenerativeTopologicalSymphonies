@@ -26,11 +26,17 @@ The repo now exposes the poster-facing model family directly:
 - Ingram-1 -> `torus_t3` via `training.train_ingram_1`
 - Ingram-2 -> `tension_t3` via `training.train_ingram_2`
 
-The repo does **not** ship external baselines such as Google Magenta, FIGARO, MusicTransformer, Diffusion U-Net, or VAE decoders. Those should be treated as external comparison targets rather than in-repo model implementations.
+The repo also exposes poster-cited benchmark baselines directly:
+
+- Google Magenta / Magenta Music Transformer -> `training.train_magenta_music_transformer`
+- MusicTransformer -> `training.train_music_transformer`
+- FIGARO -> `training.train_figaro`
+- Diffusion U-Net -> `training.train_diffusion_unet`
+- VAE decoder -> `training.train_vae`
 
 ## Poster scope
 
-The geometry and tension code is real, but the repository should be read as a topology- and tension-inspired training system, not a full theorem/proof package. A concise mapping of poster terminology, implemented scope, and geometry-family ablations is in [docs/poster_alignment.md](docs/poster_alignment.md). A direct implemented-vs-external benchmark table is in [docs/benchmark_scope.md](docs/benchmark_scope.md).
+The geometry and tension code is real, but the repository should be read as a topology- and tension-inspired training system, not a full theorem/proof package. A concise mapping of poster terminology, implemented scope, and geometry-family ablations is in [docs/poster_alignment.md](docs/poster_alignment.md). A direct benchmark status table is in [docs/benchmark_scope.md](docs/benchmark_scope.md).
 
 ## Repository layout
 
@@ -94,6 +100,16 @@ Poster-facing aliases:
 ```bash
 PYTHONPATH=src python3 -u -m training.train_ingram_1 --config configs/ingram_1_asap_score.yaml
 PYTHONPATH=src python3 -u -m training.train_ingram_2 --config configs/ingram_2_asap_score.yaml
+```
+
+Benchmark baselines:
+
+```bash
+PYTHONPATH=src python3 -u -m training.train_magenta_music_transformer --config configs/magenta_music_transformer_asap_score.yaml
+PYTHONPATH=src python3 -u -m training.train_music_transformer --config configs/music_transformer_asap_score.yaml
+PYTHONPATH=src python3 -u -m training.train_figaro --config configs/figaro_asap_score.yaml
+PYTHONPATH=src python3 -u -m training.train_diffusion_unet --config configs/diffusion_unet_asap_score.yaml
+PYTHONPATH=src python3 -u -m training.train_vae --config configs/vae_decoder_asap_score.yaml
 ```
 
 Geometry-family ablation package:

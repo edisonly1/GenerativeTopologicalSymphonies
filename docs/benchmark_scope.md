@@ -1,6 +1,6 @@
 # Benchmark Scope
 
-This repository exposes the implemented systems directly and distinguishes them from poster-cited external baselines that are not shipped here.
+This repository exposes both the core project stages and the benchmark baselines used in poster-facing comparisons.
 
 ## Implemented systems
 
@@ -11,16 +11,16 @@ This repository exposes the implemented systems directly and distinguishes them 
 | Ingram-1 | `torus_t3` | `training.train_ingram_1` | `configs/ingram_1_asap_score.yaml` |
 | Ingram-2 | `tension_t3` | `training.train_ingram_2` | `configs/ingram_2_asap_score.yaml` |
 
-## External baselines referenced in poster materials
+## Implemented benchmark baselines
 
-These are **not** implemented as first-party baselines in this repository:
+These poster-cited baselines now have repo-native implementations and entry points:
 
 | Name | Repo status | How to read the reference |
 | --- | --- | --- |
-| Google Magenta | Not implemented | External comparison target only |
-| FIGARO | Not implemented | External comparison target only |
-| MusicTransformer | Not implemented | External comparison target only |
-| Diffusion U-Net | Not implemented | External comparison target only |
-| VAE decoder | Not implemented | External comparison target only |
+| Google Magenta / Magenta Music Transformer | Implemented | Relative-attention autoregressive baseline via `training.train_magenta_music_transformer` |
+| MusicTransformer | Implemented | Relative-attention autoregressive baseline via `training.train_music_transformer` |
+| FIGARO | Implemented | Control-conditioned baseline via `training.train_figaro` |
+| Diffusion U-Net | Implemented | 1D symbolic denoiser via `training.train_diffusion_unet` |
+| VAE decoder | Implemented | Sequence-level variational baseline via `training.train_vae` |
 
-If a slide, poster, or summary mentions these names, that should not be read as a claim that this repository contains their training pipelines or reproducible checkpoints.
+These are repo-native implementations aligned to the poster benchmark names. They should be read as in-repo baselines for comparison within this project.
