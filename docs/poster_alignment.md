@@ -64,4 +64,3 @@ What the code does **not** currently claim as a formal proof artifact:
 - Lyapunov convergence proofs
 - a symbolic derivation tying every poster equation to a tested loss term
 
-Use the mathematical language as intuition for the design, not as a statement that the repo contains a full theorem-backed proof package.
