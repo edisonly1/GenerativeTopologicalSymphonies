@@ -8,8 +8,10 @@ This repository exposes the implemented model family and geometry ablations expl
 | --- | --- | --- |
 | Baseline | `baseline`, `configs/baseline_asap_score.yaml` | Plain grouped-token transformer decoder |
 | Phrase planner | `conductor`, `configs/conductor_asap_score.yaml` | Baseline plus phrase-level conductor targets |
-| Ingram-1 | `torus_t3`, `configs/ingram_1_asap_score.yaml` | Conductor-conditioned decoder with explicit `T^3` latent bottleneck |
-| Ingram-2 | `tension_t3`, `configs/ingram_2_asap_score.yaml` | Ingram-1 plus harmonic tension regularization |
+| Ingram-1 | `torus_t3`, `configs/ingram_1_asap_score.yaml`, `training.train_ingram_1` | Conductor-conditioned decoder with explicit `T^3` latent bottleneck |
+| Ingram-2 | `tension_t3`, `configs/ingram_2_asap_score.yaml`, `training.train_ingram_2` | Ingram-1 plus harmonic tension regularization |
+
+The `Ingram` names are therefore first-class public aliases backed by dedicated configs and training entry points, not only narrative labels in presentation materials.
 
 ## External baselines
 
@@ -20,7 +22,7 @@ The following names are **not implemented in this repository**:
 - MusicTransformer
 - diffusion / U-Net / VAE decoder baselines
 
-If they are mentioned in external slides or posters, treat them as external comparison targets rather than shipped code paths.
+If they are mentioned in external slides or posters, treat them as external comparison targets rather than shipped code paths. A direct status table is in `docs/benchmark_scope.md`.
 
 ## Geometry-family ablations
 

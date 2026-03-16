@@ -19,18 +19,18 @@ training, the conductor, torus bottleneck, tension regularization, and the denoi
 
 ## Public naming
 
-For public-facing materials, the implemented model family maps onto the repo stages like this:
+The repo now exposes the poster-facing model family directly:
 
-- Baseline -> `baseline`
-- Phrase planner -> `conductor`
-- Ingram-1 -> `torus_t3` / `configs/ingram_1_asap_score.yaml`
-- Ingram-2 -> `tension_t3` / `configs/ingram_2_asap_score.yaml`
+- Baseline -> `baseline` via `training.train_baseline`
+- Phrase planner -> `conductor` via `training.train_conductor`
+- Ingram-1 -> `torus_t3` via `training.train_ingram_1`
+- Ingram-2 -> `tension_t3` via `training.train_ingram_2`
 
-The repo does **not** ship external baselines such as Google Magenta, FIGARO, MusicTransformer, or diffusion/VAE decoders. Those should be treated as external comparison targets rather than in-repo model implementations.
+The repo does **not** ship external baselines such as Google Magenta, FIGARO, MusicTransformer, Diffusion U-Net, or VAE decoders. Those should be treated as external comparison targets rather than in-repo model implementations.
 
 ## Poster scope
 
-The geometry and tension code is real, but the repository should be read as a topology- and tension-inspired training system, not a full theorem/proof package. A concise mapping of poster terminology, implemented scope, and geometry-family ablations is in [docs/poster_alignment.md](/Users/Edison/Documents/generativeTopologicalSymphonies/docs/poster_alignment.md).
+The geometry and tension code is real, but the repository should be read as a topology- and tension-inspired training system, not a full theorem/proof package. A concise mapping of poster terminology, implemented scope, and geometry-family ablations is in [docs/poster_alignment.md](docs/poster_alignment.md). A direct implemented-vs-external benchmark table is in [docs/benchmark_scope.md](docs/benchmark_scope.md).
 
 ## Repository layout
 
@@ -59,7 +59,7 @@ official beat, downbeat, time-signature, and key-signature annotations.
 Prepare ASAP score MIDI with dataset annotations:
 
 ```bash
-cd /Users/Edison/Documents/generativeTopologicalSymphonies
+cd /path/to/GenerativeTopologicalSymphonies
 
 PYTHONPATH=src python3 -m preprocessing.prepare_dataset \
   --raw-dir data/raw/asap \
@@ -92,8 +92,8 @@ PYTHONPATH=src python3 -u -m evaluation.run_ablation_suite --config configs/post
 Poster-facing aliases:
 
 ```bash
-PYTHONPATH=src python3 -u -m training.train_torus --config configs/ingram_1_asap_score.yaml
-PYTHONPATH=src python3 -u -m training.train_tension --config configs/ingram_2_asap_score.yaml
+PYTHONPATH=src python3 -u -m training.train_ingram_1 --config configs/ingram_1_asap_score.yaml
+PYTHONPATH=src python3 -u -m training.train_ingram_2 --config configs/ingram_2_asap_score.yaml
 ```
 
 Geometry-family ablation package:
