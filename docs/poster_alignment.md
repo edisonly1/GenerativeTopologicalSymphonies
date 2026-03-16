@@ -1,6 +1,4 @@
-# Poster Alignment Guide
 
-This repository exposes the implemented model family and geometry ablations explicitly so the codebase can be read without relying on poster-only terminology.
 
 ## Public name to repo-stage mapping
 
@@ -46,7 +44,7 @@ Relevant configs:
 - `configs/torus_t3_asap_score.yaml`
 - `configs/poster_geometry_ablation_asap_score.yaml`
 
-The ablation suite will skip missing checkpoints when `skip_if_missing: true` is set, so the geometry search package can live in the repo even before all runs are materialized.
+
 
 ## Math scope
 
@@ -57,10 +55,4 @@ What the code implements:
 - manifold smoothness penalties
 - dispersion penalties to avoid latent collapse
 - tension-descent-inspired regularization over phrase trajectories
-
-What the code does **not** currently claim as a formal proof artifact:
-
-- Hessian-derived stability certificates
-- Lyapunov convergence proofs
-- a symbolic derivation tying every poster equation to a tested loss term
 
