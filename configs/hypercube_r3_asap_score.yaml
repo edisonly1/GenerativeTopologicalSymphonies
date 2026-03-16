@@ -1,0 +1,112 @@
+experiment_name: hypercube_r3_asap_score
+seed: 42
+
+metadata:
+  public_name: Hypercube-R3 Ablation
+  repo_stage: hypercube_r3
+  description: Bounded-hypercube latent ablation used in geometry-family comparisons.
+
+data:
+  raw_dir: data/raw/asap
+  processed_dir: data/processed/asap_score
+  splits_dir: data/splits/asap_score
+  eval_dir: data/eval_sets/asap_score
+  quantization: sixteenth
+  phrase_strategy: cadence_bars_4
+
+tokenization:
+  pitch_mode: absolute
+  pitch_vocab_size: 128
+  duration_bins: 16
+  velocity_bins: 8
+  bar_position_bins: 16
+  instrument_bins: 129
+  harmony_bins: 25
+  phrase_flag_bins: 4
+  include_harmony: true
+  include_phrase_flags: true
+
+model:
+  architecture: decoder_transformer_with_conductor_hypercube_r3_asap_score
+  d_model: 256
+  num_layers: 4
+  num_heads: 4
+  dim_feedforward: 1024
+  dropout: 0.1
+  conductor_layers: 2
+  conductor_heads: 4
+  conductor_dim_feedforward: 512
+  conductor_dropout: 0.1
+  latent_geometry: hypercube_r3
+  hypercube_dim: 3
+  torus_dropout: 0.1
+  use_conductor: true
+  use_torus: true
+  use_tension: false
+  use_refiner: false
+
+conductor_targets:
+  recurrence: 2
+  tension: 4
+  density: 4
+  cadence: 2
+  harmonic_zone: 12
+
+losses:
+  reconstruction_weight: 1.0
+  motif_weight: 0.1
+  phrase_boundary_weight: 0.15
+  phrase_boundary_class_weights:
+    - 0.0
+    - 1.0
+    - 2.5
+    - 2.5
+    - 3.0
+  circle_weight: 0.0
+  smooth_weight: 0.03
+  geometry_weight: 0.45
+  dispersion_weight: 0.20
+  min_axis_variance: 0.20
+  conductor_weight: 0.2
+  conductor_target_weights:
+    recurrence: 2.0
+    tension: 1.0
+    density: 1.0
+    cadence: 1.0
+    harmonic_zone: 1.0
+
+training:
+  batch_size: 4
+  learning_rate: 0.00015
+  weight_decay: 0.01
+  max_steps: 180
+  sequence_window: 512
+  sequence_hop: 512
+  min_sequence_length: 64
+  phrase_aligned_windows: true
+  min_complete_phrases: 4
+  min_distinct_phrases: 4
+  num_workers: 0
+  gradient_clip_norm: 1.0
+  log_every: 10
+  validate_every: 25
+  checkpoint_every: 25
+  eval_batches: 8
+  device: auto
+  cache_examples: false
+  init_checkpoint: outputs/runs/conductor_asap_score/latest.pt
+  output_dir: outputs/runs/hypercube_r3_asap_score
+
+generation:
+  temperature: 0.9
+  top_k: 0
+  top_p: 0.95
+
+evaluation:
+  sample_count: 16
+  metrics:
+    - jump_distance
+    - pitch_class_divergence
+    - recurrence
+    - cadence_stability
+    - structural_stress

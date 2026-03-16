@@ -14,7 +14,9 @@ import torch
 from training.data import AutoregressiveTokenDataset, collate_autoregressive_batch
 from training.train_baseline import build_feature_vocab_sizes, load_config, move_batch_to_device, resolve_device
 from training.train_torus import build_torus_model
-from training.train_torus import build_torus_model
+
+TORUS_GEOMETRIES = frozenset({"legacy_torus", "torus_t3"})
+SPHERE_GEOMETRIES = frozenset({"sphere_s2"})
 
 
 @dataclass(slots=True)
@@ -56,6 +58,20 @@ def _pairwise_torus(angles: torch.Tensor) -> torch.Tensor:
     delta = angles[:, None, :] - angles[None, :, :]
     wrapped = torch.atan2(torch.sin(delta), torch.cos(delta))
     return torch.linalg.vector_norm(wrapped, dim=-1)
+
+
+def _pairwise_sphere(coordinates: torch.Tensor, *, eps: float = 1e-6) -> torch.Tensor:
+    """Compute great-circle distances for a set of unit-sphere coordinates."""
+    normalized = coordinates / torch.linalg.vector_norm(
+        coordinates,
+        dim=-1,
+        keepdim=True,
+    ).clamp(min=eps)
+    cosine = (normalized[:, None, :] * normalized[None, :, :]).sum(dim=-1).clamp(
+        min=-1.0 + eps,
+        max=1.0 - eps,
+    )
+    return torch.arccos(cosine)
 
 
 def _rank_matrix(distances: torch.Tensor) -> torch.Tensor:
@@ -210,8 +226,10 @@ def score_geometry(
         )
 
     source_distances = _pairwise_euclidean(source_states)
-    if geometry_kind in {"legacy_torus", "torus_t3"}:
+    if geometry_kind in TORUS_GEOMETRIES:
         latent_distances = _pairwise_torus(latent_coordinates)
+    elif geometry_kind in SPHERE_GEOMETRIES:
+        latent_distances = _pairwise_sphere(latent_coordinates)
     else:
         latent_distances = _pairwise_euclidean(latent_coordinates)
 

@@ -199,6 +199,26 @@ class GeometryEvaluationTests(unittest.TestCase):
         self.assertLess(metrics.structural_stress, 0.2)
         self.assertGreater(metrics.trustworthiness, 0.9)
 
+    def test_score_geometry_supports_sphere_distances(self) -> None:
+        source_states = torch.tensor(
+            [[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]],
+            dtype=torch.float32,
+        )
+        latent_coordinates = torch.tensor(
+            [[1.0, 0.0, 0.0], [0.7, 0.7, 0.0], [0.0, 1.0, 0.0]],
+            dtype=torch.float32,
+        )
+
+        metrics = score_geometry(
+            piece_id="sphere-demo",
+            source_states=source_states,
+            latent_coordinates=latent_coordinates,
+            geometry_kind="sphere_s2",
+        )
+
+        self.assertGreaterEqual(metrics.structural_stress, 0.0)
+        self.assertGreater(metrics.trustworthiness, 0.5)
+
     def test_run_geometry_evaluation_smoke(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

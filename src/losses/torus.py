@@ -7,6 +7,10 @@ from dataclasses import dataclass
 import torch
 from torch import Tensor
 
+TORUS_GEOMETRIES = frozenset({"legacy_torus", "torus_t3"})
+EUCLIDEAN_GEOMETRIES = frozenset({"euclidean_r3", "plane_r2", "hypercube_r3"})
+SPHERE_GEOMETRIES = frozenset({"sphere_s2"})
+
 
 @dataclass(slots=True)
 class TorusLossOutput:
@@ -36,6 +40,20 @@ def _pairwise_torus_distances(coordinates: Tensor) -> Tensor:
 def _pairwise_euclidean_distances(coordinates: Tensor) -> Tensor:
     """Compute Euclidean pairwise distances for one phrase set."""
     return torch.cdist(coordinates, coordinates, p=2)
+
+
+def _pairwise_sphere_distances(coordinates: Tensor, *, eps: float = 1e-6) -> Tensor:
+    """Compute great-circle distances on the unit sphere."""
+    normalized = coordinates / torch.linalg.vector_norm(
+        coordinates,
+        dim=-1,
+        keepdim=True,
+    ).clamp(min=eps)
+    cosine = (normalized.unsqueeze(1) * normalized.unsqueeze(0)).sum(dim=-1).clamp(
+        min=-1.0 + eps,
+        max=1.0 - eps,
+    )
+    return torch.arccos(cosine)
 
 
 def _upper_triangle_values(matrix: Tensor) -> Tensor:
@@ -71,8 +89,10 @@ def _geometry_matching_loss(
         source = source_states[batch_index][valid_mask]
         latent = latent_coordinates[batch_index][valid_mask]
         source_distances = _pairwise_euclidean_distances(source)
-        if geometry_kind == "euclidean_r3":
+        if geometry_kind in EUCLIDEAN_GEOMETRIES:
             latent_distances = _pairwise_euclidean_distances(latent)
+        elif geometry_kind in SPHERE_GEOMETRIES:
+            latent_distances = _pairwise_sphere_distances(latent)
         else:
             latent_distances = _pairwise_torus_distances(latent)
         source_vector = _upper_triangle_values(source_distances)
@@ -104,11 +124,11 @@ def _dispersion_loss(
         phrase_count = int(valid_mask.sum().item())
         if phrase_count <= 1:
             continue
-        if geometry_kind == "euclidean_r3":
-            coordinates = latent_coordinates[batch_index][valid_mask]
-        else:
+        if geometry_kind in TORUS_GEOMETRIES:
             angles = torus_angles[batch_index][valid_mask]
             coordinates = torch.cat([torch.cos(angles), torch.sin(angles)], dim=-1)
+        else:
+            coordinates = latent_coordinates[batch_index][valid_mask]
         centered = coordinates - coordinates.mean(dim=0, keepdim=True)
         axis_variance = centered.pow(2).mean(dim=0)
         sample_losses.append(torch.relu(min_axis_variance - axis_variance).mean())
@@ -132,9 +152,9 @@ def torus_losses(
     min_axis_variance: float = 0.0,
 ) -> TorusLossOutput:
     """Apply unit-circle and wrap-aware smoothness penalties to torus states."""
-    if geometry_kind == "euclidean_r3":
+    if geometry_kind in EUCLIDEAN_GEOMETRIES:
         if latent_coordinates is None:
-            raise ValueError("Euclidean latent losses require latent_coordinates.")
+            raise ValueError("Euclidean-family latent losses require latent_coordinates.")
         valid_phrase_mask = phrase_mask.unsqueeze(-1).expand_as(latent_coordinates)
         valid_phrase_count = int(valid_phrase_mask.sum().item())
         circle_loss = _zero(latent_coordinates)
@@ -143,6 +163,28 @@ def torus_losses(
         if valid_transition_count > 0:
             euclidean_delta = latent_coordinates[:, 1:] - latent_coordinates[:, :-1]
             smoothness_error = euclidean_delta.square().mean(dim=-1)
+            smoothness_loss = smoothness_error[transition_mask].mean()
+        else:
+            smoothness_loss = _zero(latent_coordinates)
+    elif geometry_kind in SPHERE_GEOMETRIES:
+        if latent_coordinates is None:
+            raise ValueError("Sphere latent losses require latent_coordinates.")
+        valid_phrase_mask = phrase_mask.unsqueeze(-1).expand_as(latent_coordinates)
+        valid_phrase_count = int(valid_phrase_mask.sum().item())
+        radii = torch.linalg.vector_norm(latent_coordinates, dim=-1)
+        if valid_phrase_count > 0:
+            circle_loss = ((radii - 1.0) ** 2)[phrase_mask].mean()
+        else:
+            circle_loss = _zero(latent_coordinates)
+        transition_mask = phrase_mask[:, 1:] & phrase_mask[:, :-1]
+        valid_transition_count = int(transition_mask.sum().item())
+        if valid_transition_count > 0:
+            current = latent_coordinates[:, :-1]
+            nxt = latent_coordinates[:, 1:]
+            current = current / torch.linalg.vector_norm(current, dim=-1, keepdim=True).clamp(min=1e-6)
+            nxt = nxt / torch.linalg.vector_norm(nxt, dim=-1, keepdim=True).clamp(min=1e-6)
+            cosine = (current * nxt).sum(dim=-1).clamp(min=-1.0 + 1e-6, max=1.0 - 1e-6)
+            smoothness_error = torch.arccos(cosine).square()
             smoothness_loss = smoothness_error[transition_mask].mean()
         else:
             smoothness_loss = _zero(latent_coordinates)

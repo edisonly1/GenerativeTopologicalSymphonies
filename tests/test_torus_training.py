@@ -254,6 +254,59 @@ class TorusTrainingTests(unittest.TestCase):
         self.assertEqual(output.axis_labels, ("pitch_cycle", "rhythm_cycle", "harmony_cycle"))
         self.assertEqual(output.latent_coordinates.shape, (2, 3, 3))
 
+    def test_plane_r2_latent_outputs_two_coordinates(self) -> None:
+        module = TorusLatentBottleneck(
+            config=TorusLatentConfig(
+                d_model=8,
+                latent_geometry="plane_r2",
+                plane_dim=2,
+                dropout=0.0,
+            ),
+        )
+        phrase_states = torch.randn(1, 4, 8)
+        phrase_mask = torch.tensor([[True, True, True, False]])
+
+        output = module(phrase_states, phrase_mask=phrase_mask)
+
+        self.assertEqual(output.latent_geometry, "plane_r2")
+        self.assertEqual(output.axis_labels, ("pitch_cycle", "rhythm_cycle"))
+        self.assertEqual(output.latent_coordinates.shape, (1, 4, 2))
+
+    def test_sphere_s2_latent_outputs_unit_norm_coordinates(self) -> None:
+        module = TorusLatentBottleneck(
+            config=TorusLatentConfig(
+                d_model=8,
+                latent_geometry="sphere_s2",
+                sphere_dim=3,
+                dropout=0.0,
+            ),
+        )
+        phrase_states = torch.randn(2, 3, 8)
+        phrase_mask = torch.tensor([[True, True, False], [True, True, True]])
+
+        output = module(phrase_states, phrase_mask=phrase_mask)
+
+        self.assertEqual(output.latent_geometry, "sphere_s2")
+        valid_norms = torch.linalg.vector_norm(output.latent_coordinates, dim=-1)[phrase_mask]
+        self.assertTrue(torch.allclose(valid_norms, torch.ones_like(valid_norms), atol=1e-5))
+
+    def test_hypercube_r3_latent_stays_bounded(self) -> None:
+        module = TorusLatentBottleneck(
+            config=TorusLatentConfig(
+                d_model=8,
+                latent_geometry="hypercube_r3",
+                hypercube_dim=3,
+                dropout=0.0,
+            ),
+        )
+        phrase_states = torch.randn(2, 3, 8)
+        phrase_mask = torch.tensor([[True, True, False], [True, True, True]])
+
+        output = module(phrase_states, phrase_mask=phrase_mask)
+
+        self.assertEqual(output.latent_geometry, "hypercube_r3")
+        self.assertTrue(torch.all(output.latent_coordinates.abs() <= 1.0))
+
     def test_checkpoint_initialization_uses_first_existing_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -305,6 +358,28 @@ class TorusTrainingTests(unittest.TestCase):
         )
 
         self.assertEqual(float(loss.circle_loss.item()), 0.0)
+        self.assertGreater(float(loss.smoothness_loss.item()), 0.0)
+
+    def test_sphere_latent_losses_enforce_unit_norm_and_geodesic_smoothness(self) -> None:
+        latent_coordinates = torch.tensor(
+            [[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]],
+            dtype=torch.float32,
+        )
+        torus_radii = torch.ones((1, 2, 3), dtype=torch.float32)
+        torus_angles = latent_coordinates.clone()
+        phrase_mask = torch.tensor([[True, True]])
+
+        loss = torus_losses(
+            torus_radii,
+            torus_angles,
+            phrase_mask,
+            geometry_kind="sphere_s2",
+            latent_coordinates=latent_coordinates,
+            circle_weight=0.1,
+            smooth_weight=0.05,
+        )
+
+        self.assertAlmostEqual(float(loss.circle_loss.item()), 0.0, places=5)
         self.assertGreater(float(loss.smoothness_loss.item()), 0.0)
 
     def test_geometry_and_dispersion_losses_activate_for_torus_latent(self) -> None:

@@ -10,6 +10,9 @@ from torch import Tensor, nn
 
 
 LATENT_GEOMETRY_LABELS = ("pitch_cycle", "rhythm_cycle", "harmony_cycle")
+TORUS_GEOMETRIES = frozenset({"legacy_torus", "torus_t3"})
+EUCLIDEAN_GEOMETRIES = frozenset({"euclidean_r3", "plane_r2", "hypercube_r3"})
+SPHERE_GEOMETRIES = frozenset({"sphere_s2"})
 
 
 @dataclass(slots=True)
@@ -17,10 +20,20 @@ class TorusLatentConfig:
     """Configuration for the torus latent bottleneck."""
 
     d_model: int = 256
-    latent_geometry: Literal["legacy_torus", "torus_t3", "euclidean_r3"] = "legacy_torus"
+    latent_geometry: Literal[
+        "legacy_torus",
+        "torus_t3",
+        "euclidean_r3",
+        "plane_r2",
+        "sphere_s2",
+        "hypercube_r3",
+    ] = "legacy_torus"
     latent_style_dim: int = 64
     torus_axis_count: int = 3
     euclidean_dim: int = 3
+    plane_dim: int = 2
+    sphere_dim: int = 3
+    hypercube_dim: int = 3
     dropout: float = 0.1
     eps: float = 1e-6
 
@@ -47,6 +60,7 @@ class TorusLatentBottleneck(nn.Module):
         super().__init__()
         self.config = config
         self.input_norm = nn.LayerNorm(config.d_model)
+        self.to_coordinates: nn.Linear | None = None
         if config.latent_geometry == "legacy_torus":
             if config.latent_style_dim <= 0 or config.latent_style_dim % 2 != 0:
                 raise ValueError("latent_style_dim must be a positive even integer.")
@@ -55,7 +69,6 @@ class TorusLatentBottleneck(nn.Module):
             self.to_torus_pairs = nn.Linear(config.d_model, config.latent_style_dim)
             local_input_dim = config.latent_style_dim
             global_input_dim = config.latent_style_dim
-            self.to_euclidean = None
             self.axis_projections = None
         elif config.latent_geometry == "torus_t3":
             if config.torus_axis_count != 3:
@@ -66,7 +79,6 @@ class TorusLatentBottleneck(nn.Module):
                 [nn.Linear(config.d_model, 2) for _ in range(self.circle_count)]
             )
             self.to_torus_pairs = None
-            self.to_euclidean = None
             local_input_dim = self.circle_count * 2
             global_input_dim = self.circle_count * 2
         elif config.latent_geometry == "euclidean_r3":
@@ -76,9 +88,39 @@ class TorusLatentBottleneck(nn.Module):
             self.axis_labels = LATENT_GEOMETRY_LABELS[: self.circle_count]
             self.to_torus_pairs = None
             self.axis_projections = None
-            self.to_euclidean = nn.Linear(config.d_model, config.euclidean_dim)
+            self.to_coordinates = nn.Linear(config.d_model, config.euclidean_dim)
             local_input_dim = config.euclidean_dim
             global_input_dim = config.euclidean_dim
+        elif config.latent_geometry == "plane_r2":
+            if config.plane_dim != 2:
+                raise ValueError("plane_r2 expects plane_dim = 2.")
+            self.circle_count = config.plane_dim
+            self.axis_labels = LATENT_GEOMETRY_LABELS[: self.circle_count]
+            self.to_torus_pairs = None
+            self.axis_projections = None
+            self.to_coordinates = nn.Linear(config.d_model, config.plane_dim)
+            local_input_dim = config.plane_dim
+            global_input_dim = config.plane_dim
+        elif config.latent_geometry == "sphere_s2":
+            if config.sphere_dim != 3:
+                raise ValueError("sphere_s2 expects sphere_dim = 3.")
+            self.circle_count = config.sphere_dim
+            self.axis_labels = LATENT_GEOMETRY_LABELS[: self.circle_count]
+            self.to_torus_pairs = None
+            self.axis_projections = None
+            self.to_coordinates = nn.Linear(config.d_model, config.sphere_dim)
+            local_input_dim = config.sphere_dim
+            global_input_dim = config.sphere_dim
+        elif config.latent_geometry == "hypercube_r3":
+            if config.hypercube_dim != 3:
+                raise ValueError("hypercube_r3 expects hypercube_dim = 3.")
+            self.circle_count = config.hypercube_dim
+            self.axis_labels = LATENT_GEOMETRY_LABELS[: self.circle_count]
+            self.to_torus_pairs = None
+            self.axis_projections = None
+            self.to_coordinates = nn.Linear(config.d_model, config.hypercube_dim)
+            local_input_dim = config.hypercube_dim
+            global_input_dim = config.hypercube_dim
         else:
             raise ValueError(f"Unsupported latent geometry: {config.latent_geometry}")
         self.local_projection = nn.Linear(local_input_dim, config.d_model)
@@ -120,11 +162,36 @@ class TorusLatentBottleneck(nn.Module):
 
     def _euclidean_forward(self, hidden: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor]:
         """Project phrase states into a matched Euclidean R^3 latent."""
-        coordinates = self.to_euclidean(hidden)
-        zero = coordinates.sum(dim=-1, keepdim=True) * 0.0
-        torus_pairs = coordinates.unsqueeze(-1).repeat(1, 1, 1, 2)
-        torus_angles = torch.atan2(coordinates, torch.ones_like(coordinates))
-        torus_radii = torch.linalg.vector_norm(coordinates.unsqueeze(-1), dim=-1)
+        coordinates = self.to_coordinates(hidden)
+        torus_pairs = coordinates.unsqueeze(-1)
+        torus_angles = coordinates
+        torus_radii = torch.linalg.vector_norm(coordinates, dim=-1, keepdim=True).expand_as(coordinates)
+        return coordinates, torus_pairs, torus_angles, torus_radii
+
+    def _plane_forward(self, hidden: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+        """Project phrase states into a learned 2D plane."""
+        coordinates = self.to_coordinates(hidden)
+        torus_pairs = coordinates.unsqueeze(-1)
+        torus_angles = coordinates
+        torus_radii = torch.linalg.vector_norm(coordinates, dim=-1, keepdim=True).expand_as(coordinates)
+        return coordinates, torus_pairs, torus_angles, torus_radii
+
+    def _sphere_forward(self, hidden: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+        """Project phrase states onto a unit sphere."""
+        raw_coordinates = self.to_coordinates(hidden)
+        torus_radii = torch.linalg.vector_norm(raw_coordinates, dim=-1, keepdim=True).clamp(min=self.config.eps)
+        coordinates = raw_coordinates / torus_radii
+        torus_pairs = coordinates.unsqueeze(-1)
+        torus_angles = coordinates
+        expanded_radii = torus_radii.expand_as(coordinates)
+        return coordinates, torus_pairs, torus_angles, expanded_radii
+
+    def _hypercube_forward(self, hidden: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+        """Project phrase states into a bounded 3D hypercube."""
+        coordinates = torch.tanh(self.to_coordinates(hidden))
+        torus_pairs = coordinates.unsqueeze(-1)
+        torus_angles = coordinates
+        torus_radii = torch.linalg.vector_norm(coordinates, dim=-1, keepdim=True).expand_as(coordinates)
         return coordinates, torus_pairs, torus_angles, torus_radii
 
     def forward(
@@ -141,6 +208,15 @@ class TorusLatentBottleneck(nn.Module):
         elif self.config.latent_geometry == "torus_t3":
             latent_state, torus_pairs, torus_angles, torus_radii = self._t3_torus_forward(hidden)
             latent_coordinates = torus_angles
+        elif self.config.latent_geometry == "plane_r2":
+            latent_state, torus_pairs, torus_angles, torus_radii = self._plane_forward(hidden)
+            latent_coordinates = latent_state
+        elif self.config.latent_geometry == "sphere_s2":
+            latent_state, torus_pairs, torus_angles, torus_radii = self._sphere_forward(hidden)
+            latent_coordinates = latent_state
+        elif self.config.latent_geometry == "hypercube_r3":
+            latent_state, torus_pairs, torus_angles, torus_radii = self._hypercube_forward(hidden)
+            latent_coordinates = latent_state
         else:
             latent_state, torus_pairs, torus_angles, torus_radii = self._euclidean_forward(hidden)
             latent_coordinates = latent_state
