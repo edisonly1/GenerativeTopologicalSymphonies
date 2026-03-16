@@ -15,7 +15,9 @@ from preprocessing import load_quantized_piece_json, write_quantized_piece_json
 from tokenization import example_to_feature_lists, load_piece_example, load_split_piece_ids
 from training.train_baseline import build_feature_vocab_sizes, build_model, load_config, resolve_device
 from training.train_conductor import build_conductor_model
+from training.train_diffusion_unet import build_diffusion_unet_model
 from training.train_torus import build_torus_model
+from training.train_vae import build_vae_model
 
 
 PHRASE_FLAG_START_VALUES = {1, 3}
@@ -87,7 +89,12 @@ def _sample_from_logits(
 def _build_model_from_config(config: dict[str, Any], checkpoint_payload: dict[str, Any], device: torch.device):
     """Instantiate and load either the baseline or conductor model."""
     vocab_sizes = build_feature_vocab_sizes(config["tokenization"])
-    if config["model"].get("use_torus", False):
+    architecture = config["model"].get("architecture", "decoder_transformer")
+    if architecture == "vae_decoder":
+        model = build_vae_model(config, vocab_sizes=vocab_sizes)
+    elif architecture == "diffusion_unet":
+        model = build_diffusion_unet_model(config, vocab_sizes=vocab_sizes)
+    elif config["model"].get("use_torus", False):
         model = build_torus_model(config, vocab_sizes=vocab_sizes)
     elif config["model"].get("use_conductor", False):
         model = build_conductor_model(config, vocab_sizes=vocab_sizes)
@@ -120,13 +127,19 @@ def _derive_phrase_ids(phrase_flags: list[int]) -> list[int]:
     return phrase_ids
 
 
-def _prepare_model_inputs(features: dict[str, list[int]], device: torch.device) -> tuple[dict[str, torch.Tensor], torch.Tensor, torch.Tensor, torch.Tensor]:
+def _prepare_model_inputs(
+    features: dict[str, list[int]],
+    device: torch.device,
+    *,
+    offset_tokens: bool = True,
+) -> tuple[dict[str, torch.Tensor], torch.Tensor, torch.Tensor, torch.Tensor]:
     """Convert feature lists into batched tensors for inference."""
     sequence_length = len(features["pitch"])
     if sequence_length == 0:
         raise ValueError("Cannot generate from an empty prompt.")
+    offset = 1 if offset_tokens else 0
     inputs = {
-        feature: torch.tensor([values], dtype=torch.long, device=device) + 1
+        feature: torch.tensor([values], dtype=torch.long, device=device) + offset
         for feature, values in features.items()
     }
     attention_mask = torch.ones((1, sequence_length), dtype=torch.bool, device=device)
@@ -159,7 +172,8 @@ def _generate_next_feature_values(
             )
             logits = output.token_logits
         else:
-            logits = model(inputs, attention_mask)
+            output = model(inputs, attention_mask)
+            logits = output.token_logits if hasattr(output, "token_logits") else output
     return {
         feature: _sample_from_logits(
             logits[feature][0, -1],
@@ -169,6 +183,38 @@ def _generate_next_feature_values(
         ) - 1
         for feature in FEATURE_NAMES
     }
+
+
+def _iterative_denoise_feature_values(
+    model,
+    features: dict[str, list[int]],
+    *,
+    device: torch.device,
+    temperature: float,
+    top_k: int,
+    top_p: float,
+    denoising_steps: int,
+    prompt_length: int,
+) -> dict[str, list[int]]:
+    """Iteratively fill masked continuation positions for denoising-style models."""
+    current = {
+        feature: list(values)
+        for feature, values in features.items()
+    }
+    for _ in range(max(denoising_steps, 1)):
+        inputs, attention_mask, _, _ = _prepare_model_inputs(current, device)
+        with torch.no_grad():
+            output = model(inputs, attention_mask)
+            logits = output.token_logits if hasattr(output, "token_logits") else output
+        for position in range(prompt_length, len(current["pitch"])):
+            for feature in FEATURE_NAMES:
+                current[feature][position] = _sample_from_logits(
+                    logits[feature][0, position],
+                    temperature=temperature,
+                    top_k=top_k,
+                    top_p=top_p,
+                ) - 1
+    return current
 
 
 def _decode_velocity(bucket: int, velocity_bins: int) -> int:
@@ -274,19 +320,34 @@ def generate_piece_continuation(
     output_piece_id: str,
 ) -> tuple[dict[str, list[int]], Any]:
     """Generate a continuation from a prompt prefix."""
+    architecture = config["model"].get("architecture", "decoder_transformer")
     features = _initial_prompt_features(prompt_example, prompt_events)
-    for _ in range(generate_events):
-        next_values = _generate_next_feature_values(
+    if architecture == "diffusion_unet":
+        for feature in FEATURE_NAMES:
+            features[feature].extend([-1] * generate_events)
+        features = _iterative_denoise_feature_values(
             model,
-            config,
             features,
             device=device,
             temperature=temperature,
             top_k=top_k,
             top_p=top_p,
+            denoising_steps=config.get("generation", {}).get("denoising_steps", 6),
+            prompt_length=len(features["pitch"]) - generate_events,
         )
-        for feature, value in next_values.items():
-            features[feature].append(value)
+    else:
+        for _ in range(generate_events):
+            next_values = _generate_next_feature_values(
+                model,
+                config,
+                features,
+                device=device,
+                temperature=temperature,
+                top_k=top_k,
+                top_p=top_p,
+            )
+            for feature, value in next_values.items():
+                features[feature].append(value)
 
     generated_piece = _reconstruct_quantized_piece(
         piece_id=output_piece_id,

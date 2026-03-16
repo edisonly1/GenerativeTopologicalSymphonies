@@ -25,6 +25,8 @@ from preprocessing import (
 )
 from tokenization import encode_piece_to_blocks
 from training.train_baseline import run_baseline_training
+from training.train_diffusion_unet import run_diffusion_unet_training
+from training.train_vae import run_vae_training
 
 
 def _toy_baseline_config(root: Path) -> dict:
@@ -86,6 +88,152 @@ def _toy_baseline_config(root: Path) -> dict:
             "temperature": 1.0,
             "top_k": 0,
             "top_p": 0.95,
+        },
+        "evaluation": {
+            "sample_count": 4,
+            "metrics": ["perplexity"],
+        },
+    }
+
+
+def _toy_vae_config(root: Path) -> dict:
+    """Build a compact VAE config for generation smoke tests."""
+    return {
+        "experiment_name": "toy_vae",
+        "seed": 9,
+        "data": {
+            "raw_dir": str(root / "raw"),
+            "processed_dir": str(root / "processed"),
+            "splits_dir": str(root / "splits"),
+            "eval_dir": str(root / "eval"),
+            "quantization": "sixteenth",
+            "phrase_strategy": "bars_4",
+        },
+        "tokenization": {
+            "pitch_mode": "absolute",
+            "pitch_vocab_size": 128,
+            "duration_bins": 8,
+            "velocity_bins": 4,
+            "bar_position_bins": 16,
+            "instrument_bins": 129,
+            "harmony_bins": 1,
+            "phrase_flag_bins": 4,
+            "include_harmony": True,
+            "include_phrase_flags": True,
+        },
+        "model": {
+            "architecture": "vae_decoder",
+            "d_model": 64,
+            "num_layers": 2,
+            "encoder_layers": 2,
+            "num_heads": 4,
+            "dim_feedforward": 128,
+            "dropout": 0.1,
+            "latent_dim": 16,
+            "vae_dropout": 0.1,
+            "use_conductor": False,
+            "use_torus": False,
+            "use_tension": False,
+            "use_refiner": False,
+        },
+        "losses": {
+            "kl_weight": 0.05,
+        },
+        "training": {
+            "batch_size": 2,
+            "learning_rate": 0.001,
+            "weight_decay": 0.0,
+            "max_steps": 1,
+            "sequence_window": 8,
+            "sequence_hop": 4,
+            "min_sequence_length": 2,
+            "num_workers": 0,
+            "gradient_clip_norm": 1.0,
+            "log_every": 1,
+            "validate_every": 1,
+            "checkpoint_every": 1,
+            "eval_batches": 1,
+            "device": "cpu",
+            "cache_examples": True,
+            "output_dir": str(root / "vae_outputs"),
+        },
+        "generation": {
+            "temperature": 1.0,
+            "top_k": 0,
+            "top_p": 0.95,
+        },
+        "evaluation": {
+            "sample_count": 4,
+            "metrics": ["perplexity"],
+        },
+    }
+
+
+def _toy_diffusion_config(root: Path) -> dict:
+    """Build a compact diffusion-unet config for generation smoke tests."""
+    return {
+        "experiment_name": "toy_diffusion_unet",
+        "seed": 11,
+        "data": {
+            "raw_dir": str(root / "raw"),
+            "processed_dir": str(root / "processed"),
+            "splits_dir": str(root / "splits"),
+            "eval_dir": str(root / "eval"),
+            "quantization": "sixteenth",
+            "phrase_strategy": "bars_4",
+        },
+        "tokenization": {
+            "pitch_mode": "absolute",
+            "pitch_vocab_size": 128,
+            "duration_bins": 8,
+            "velocity_bins": 4,
+            "bar_position_bins": 16,
+            "instrument_bins": 129,
+            "harmony_bins": 1,
+            "phrase_flag_bins": 4,
+            "include_harmony": True,
+            "include_phrase_flags": True,
+        },
+        "model": {
+            "architecture": "diffusion_unet",
+            "d_model": 64,
+            "base_channels": 64,
+            "dropout": 0.1,
+            "use_conductor": False,
+            "use_torus": False,
+            "use_tension": False,
+            "use_refiner": True,
+        },
+        "training": {
+            "batch_size": 2,
+            "learning_rate": 0.001,
+            "weight_decay": 0.0,
+            "max_steps": 1,
+            "sequence_window": 8,
+            "sequence_hop": 4,
+            "min_sequence_length": 2,
+            "num_workers": 0,
+            "gradient_clip_norm": 1.0,
+            "log_every": 1,
+            "validate_every": 1,
+            "checkpoint_every": 1,
+            "eval_batches": 1,
+            "device": "cpu",
+            "cache_examples": True,
+            "output_dir": str(root / "diffusion_outputs"),
+            "corruption": {
+                "token_mask_prob": 0.20,
+                "pitch_shift_prob": 0.10,
+                "duration_shift_prob": 0.10,
+                "phrase_flag_flip_prob": 0.10,
+                "bar_position_jitter_prob": 0.10,
+            },
+        },
+        "generation": {
+            "temperature": 1.0,
+            "top_k": 0,
+            "top_p": 0.95,
+            "denoising_steps": 3,
         },
         "evaluation": {
             "sample_count": 4,
@@ -201,6 +349,64 @@ class GenerationEvaluationTests(unittest.TestCase):
             self.assertEqual(evaluation["summary"]["piece_count"], 1)
             self.assertTrue((root / "evaluated" / "summary.json").exists())
             self.assertTrue((root / "evaluated" / "metrics.jsonl").exists())
+
+    def test_generate_from_vae_and_diffusion_checkpoints(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            generate_toy_dataset(root / "raw", num_pieces=5, seed=9)
+            prepare_dataset(
+                raw_dir=root / "raw",
+                processed_dir=root / "processed",
+                splits_dir=root / "splits",
+                train_ratio=0.6,
+                val_ratio=0.2,
+                seed=3,
+            )
+
+            vae_config = _toy_vae_config(root)
+            diffusion_config = _toy_diffusion_config(root)
+            run_vae_training(
+                vae_config,
+                config_path=root / "toy_vae.yaml",
+                dry_run=False,
+                max_steps_override=1,
+            )
+            run_diffusion_unet_training(
+                diffusion_config,
+                config_path=root / "toy_diffusion.yaml",
+                dry_run=False,
+                max_steps_override=1,
+            )
+
+            vae_generated = generate_from_checkpoint(
+                root / "vae_outputs" / "latest.pt",
+                processed_dir=root / "processed",
+                splits_dir=root / "splits",
+                split="val",
+                limit_pieces=1,
+                prompt_events=4,
+                generate_events=6,
+                device="cpu",
+                output_dir=root / "vae_generated",
+                seed=5,
+            )
+            diffusion_generated = generate_from_checkpoint(
+                root / "diffusion_outputs" / "latest.pt",
+                processed_dir=root / "processed",
+                splits_dir=root / "splits",
+                split="val",
+                limit_pieces=1,
+                prompt_events=4,
+                generate_events=6,
+                device="cpu",
+                output_dir=root / "diffusion_generated",
+                seed=5,
+            )
+
+            self.assertEqual(vae_generated["piece_count"], 1)
+            self.assertEqual(diffusion_generated["piece_count"], 1)
+            self.assertTrue(Path(vae_generated["items"][0]["output_json"]).exists())
+            self.assertTrue(Path(diffusion_generated["items"][0]["output_json"]).exists())
 
     def test_slice_quantized_piece_rebases_segment(self) -> None:
         piece = QuantizedPiece(

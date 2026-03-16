@@ -62,6 +62,10 @@ The repo now supports the [ASAP aligned-score dataset](https://github.com/fosfra
 as a score-first alternative to MAESTRO. ASAP is useful here because it provides score MIDI plus
 official beat, downbeat, time-signature, and key-signature annotations.
 
+The GitHub repo intentionally omits raw, processed, and split dataset artifacts. Before retraining,
+either prepare ASAP locally into `data/raw/asap`, `data/processed/asap_score`, and
+`data/splits/asap_score`, or edit the configs to point at your local dataset paths.
+
 Prepare ASAP score MIDI with dataset annotations:
 
 ```bash
