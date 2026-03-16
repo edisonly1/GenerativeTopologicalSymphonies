@@ -11,18 +11,14 @@
 | Geometry Preservation | mean_structural_stress | - | - | - | 3.3517 | 0.8589 | lower |
 | Latent Collapse | mean_collapse_score | - | - | - | 0.1218 | 0.0789 | lower |
 
-## Poster Claims
+## Claims
 
 | Claim | Current | Target | Status |
 | --- | --- | --- | --- |
 | Erratic melodic jumps reduced by 68% | 93.26% | 68.0% | supported |
 | Tonal distribution 85% closer to human-composed music | 85.04% | 85.0% | supported |
 | Structural stress reduced by 73% versus Euclidean mapping | 74.37% | 73.0% | supported |
-| Persistent patterns increased 7x over the baseline | 91.91x | 7.0x | supported |
+| Persistent patterns increased 7x over the baseline | 9.91x | 7.0x | supported |
 | Unconstrained generation collapses to a low-dimensional signature | 35.19% | - | supported |
 
-## Verdict
 
-- Supported claims: 5
-- Partial claims: 0
-- Unsupported claims: 0
